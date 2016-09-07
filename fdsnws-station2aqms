@@ -22,21 +22,27 @@ if __name__ == "__main__":
 
         Populates D_Abbreviation, Station_Data, Channel_Data, and Simple_Response
         If these tables do not exist yet, they will be created.
+
+        If no database is available, the script can be run with the -f flag
+        to write the meta-data to a StationXML file instead.
     """
     HAVE_DB = False
+    POPULATE = True
 
-    parser = argparse.ArgumentParser(description="Retrieves FDSN StationXML from a fdsn webservice \
-        and optionally populates (PostgreSQL) AQMS tables station_data, channel_data, and simple_response") 
+    parser = argparse.ArgumentParser(description="Retrieves FDSN StationXML from \
+        a fdsn webservice (default=IRIS) and populates (PostgreSQL) AQMS tables \
+        station_data, channel_data, and simple_response. Database connection \
+        parameters have to be set with environment variables. \
+        Alternatively it can be run with the -f flag to save the meta-data to a \
+        StationXML file instead. Logs are written to fdsnws-station2aqms.log. \
+        See https://github.com/jrhartog/fdsnws-station2aqms") 
 
     # required argument
     help_text = "Specify a FDSN or Virtual network code, wildcards are allowed"
-    parser.add_argument("net",help=help_text)
+    parser.add_argument("network",help=help_text)
 
     # optional arguments
-    help_text = "Populate a PostgreSQL database, requires environment variables DB_PORT,DB_NAME,DB_HOST,\
-                 DB_USER,DB_PASSWORD. If DB_PASSWORD is not specified, you'll be prompted for it"
-    parser.add_argument("-p","--populate",help=help_text,action="store_true")
-    help_text = "Save the inventory to a file as well, provide filename"
+    help_text = "Save the inventory to a file instead, provide filename"
     parser.add_argument("-f","--filename", help=help_text)
     help_text = "Specify a station code, wildcards are allowed"
     parser.add_argument("-s","--station",help=help_text)
@@ -50,7 +56,7 @@ if __name__ == "__main__":
     parser.add_argument("-ws","--webservice",help=help_text,default="IRIS", choices=["BGR","EMSC","ETH","GEONET","GFZ","INGV","IPGP","IRIS","ISC","KOERI","LMU","NCEDC","NIEP","NOA","ODC","ORFEUS","RESIF","SCEDC","USGS","USP"])
     help_text = "Specify level of information (default=response)"
     parser.add_argument("-level","--level",help=help_text,default="response",choices=["station","channel","response"])
-    help_text = "Be more verbose"
+    help_text = "Be more verbose in logfile"
     parser.add_argument("-v","--verbose",help=help_text,action="store_true")
     
     args = parser.parse_args()
@@ -59,7 +65,7 @@ if __name__ == "__main__":
     logging.basicConfig(filename="fdsnws-station2aqms.log", level=logging.WARNING)
 
     kwargs = {}
-    kwargs["network"] = args.net
+    kwargs["network"] = args.network
     if not args.all:
         kwargs["endafter"] = UTCDateTime.now()
     if args.station:
@@ -94,13 +100,16 @@ if __name__ == "__main__":
 
     # write to file if so requested by user
     if args.filename:
+        POPULATE = False
         logging.info("Writing inventory to file {}".format(args.filename))
         inventory.write(args.filename, format="STATIONXML")
 
     logging.info("".format(inventory))
 
-    if args.populate:
+    if POPULATE:
         try:
+            # import database specific stuff here so that script can be run
+            # with the -f flag even when these are not available.
             from sqlalchemy import engine_from_config
             from sqlalchemy.orm import sessionmaker
 
@@ -109,7 +118,8 @@ if __name__ == "__main__":
             from aqms_ir.schema import Base
 
 
-            # create configured engine instance
+            # create configured engine instance, configure() uses environment
+            # variables to create postgresql connect URI
             engine = engine_from_config(configure(), prefix='sqlalchemy.')
 
             # create a configured "Session" class
