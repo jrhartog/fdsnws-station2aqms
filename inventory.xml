@@ -3,8 +3,8 @@
   <Source>IRIS-DMC</Source>
   <Sender>IRIS-DMC</Sender>
   <Module>IRIS WEB SERVICE: fdsnws-station | version: 1.1.20</Module>
-  <ModuleURI>http://service.iris.edu/fdsnws/station/1/query?station=COLT&amp;level=response&amp;endafter=2016-09-07T05%3A32%3A04.228035&amp;network=UW&amp;format=xml</ModuleURI>
-  <Created>2016-09-07T05:32:04+00:00</Created>
+  <ModuleURI>http://service.iris.edu/fdsnws/station/1/query?station=COLT&amp;level=response&amp;endafter=2016-09-07T17%3A57%3A26.855944&amp;network=UW&amp;format=xml</ModuleURI>
+  <Created>2016-09-07T17:57:26+00:00</Created>
   <Network code="UW" endDate="2500-12-31T23:59:59+00:00" restrictedStatus="open" startDate="1963-01-01T00:00:00+00:00">
     <Description>Pacific Northwest Regional Seismic Network</Description>
     <TotalNumberStations>575</TotalNumberStations>

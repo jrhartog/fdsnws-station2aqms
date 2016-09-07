@@ -26,13 +26,15 @@ if __name__ == "__main__":
         If no database is available, the script can be run with the -f flag
         to write the meta-data to a StationXML file instead.
     """
-    HAVE_DB = False
     POPULATE = True
 
     parser = argparse.ArgumentParser(description="Retrieves FDSN StationXML from \
         a fdsn webservice (default=IRIS) and populates (PostgreSQL) AQMS tables \
-        station_data, channel_data, and simple_response. Database connection \
-        parameters have to be set with environment variables. \
+        station_data, channel_data, simple_response, and associated dictionary \
+        tables (d_abbreviation, d_unit, d_format). Database connection \
+        parameters have to be set with environment variables DB_NAME, DB_HOST, \
+        DB_PORT, DB_USER, and optionally, DB_PASSWORD. \
+        The tables will be created if they do not exist yet. \
         Alternatively it can be run with the -f flag to save the meta-data to a \
         StationXML file instead. Logs are written to fdsnws-station2aqms.log. \
         See https://github.com/jrhartog/fdsnws-station2aqms") 
@@ -53,7 +55,9 @@ if __name__ == "__main__":
     help_text = "Request metadata for all times, default is active channels only!"
     parser.add_argument("-a","--all",help=help_text,action="store_true")
     help_text = "Specify Webservice to query (default=IRIS)"
-    parser.add_argument("-ws","--webservice",help=help_text,default="IRIS", choices=["BGR","EMSC","ETH","GEONET","GFZ","INGV","IPGP","IRIS","ISC","KOERI","LMU","NCEDC","NIEP","NOA","ODC","ORFEUS","RESIF","SCEDC","USGS","USP"])
+    parser.add_argument("-ws","--webservice",help=help_text,default="IRIS", choices=["BGR",
+    "EMSC","ETH","GEONET","GFZ","INGV","IPGP","IRIS","ISC","KOERI","LMU","NCEDC",
+    "NIEP","NOA","ODC","ORFEUS","RESIF","SCEDC","USGS","USP"])
     help_text = "Specify level of information (default=response)"
     parser.add_argument("-level","--level",help=help_text,default="response",choices=["station","channel","response"])
     help_text = "Be more verbose in logfile"
@@ -78,17 +82,13 @@ if __name__ == "__main__":
         kwargs["level"] = args.level
 
     if args.verbose:
-        logging.getLogger('root').setLevel(logging.DEBUG)
+        logging.getLogger().setLevel(logging.INFO)
 
 
     logging.info("Retrieving station information from {} webservice\n".format(args.webservice))
     logging.info("Request parameters:\n")
     for key, value in kwargs.iteritems():
         logging.info("\t{}={}".format(key,value))
-    if HAVE_DB:
-        logging.info("Populating database {} on {}:{} as user {}\n".format(DB_NAME,DB_HOST,DB_PORT,DB_USER))
-    else:
-        logging.info("Creating file load_metadata.sql\n")
     
     # retrieve the requested inventory
     try:
@@ -120,23 +120,28 @@ if __name__ == "__main__":
 
             # create configured engine instance, configure() uses environment
             # variables to create postgresql connect URI
-            engine = engine_from_config(configure(), prefix='sqlalchemy.')
+            config = configure()
+            engine = engine_from_config(config, prefix='sqlalchemy.')
 
             # create a configured "Session" class
             Session = sessionmaker(bind=engine)
 
-            logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
+            logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
 
+            db_name = config["sqlalchemy.url"].split("/")[-1]
+            db_user = config["sqlalchemy.url"].split("/")[2].split(":")[0]
+            logging.info("Populating database {} as user {}\n".format(db_name,db_user))
             # This command will create the database tables if they do not exist yet.
             Base.metadata.create_all(engine)
 
             session = Session()
             inventory2db(session,inventory)
             session.close()
+        
+            logging.info("Finished successfully.")
 
-        except Error as e:
-            logging.error("Error connecting to database {} on {}:{} as user {} ({}). Will create .sql files.".format(DB_NAME,
-                   DB_HOST,DB_PORT,DB_USER, e))
+        except Exception as e:
+            logging.error("Error connecting to database {} as {} ({}). Will create .sql files.".format(db_name,db_user,e))
             if not args.filename:
                 logging.error("Saving inventory to inventory.xml file instead.")
                 inventory.write("inventory.xml", format="STATIONXML")
