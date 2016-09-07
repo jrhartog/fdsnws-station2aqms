@@ -13,15 +13,15 @@ Another option is to use a third-party distributor such as Anaconda ("conda").
 4. `pip install -r requirements.txt`
 
 # Configuration
-1. Edit env.sh to be appropriate for your database
-2. `source env.sh`
+1. Edit the environment file to be appropriate for your database
+2. `source environment` to create environment variables
 
 The above procedure should have installed a very rudimentary script (`inventory2aqms`) that 
 reads an "inventory.xml" file in the current working directory and tries to load it into 
 the database defined by the environment variables listed in env.sh. Just like fdsnws-station2aqms, 
 it will create the schema if it doesn't exist yet but not overwrite any existing tables. 
-Feel free to try that, the included inventory.xml file contains meta-data for the CC (CVO) network.
-The script leaves behind a verbose inventory2aqms.log file.
+Feel free to try that, the included inventory.xml file contains meta-data for some UW, UO, or CC 
+network stations.  The script leaves behind a verbose inventory2aqms.log file.
 
 # Usage
   fdsnws-station2aqms -h
@@ -34,10 +34,10 @@ The script leaves behind a verbose inventory2aqms.log file.
   
   Retrieves FDSN StationXML from a fdsn webservice (default=IRIS) and populates
   (PostgreSQL) AQMS tables station_data, channel_data, and simple_response.
-  Database connection parameters have to be set with environment variables.
-  Alternatively it can be run with the -f flag to save the meta-data to a
-  StationXML file instead.  Logs are written to fdsnws-station2aqms.log. See
-  https://github.com/jrhartog/fdsnws-station2aqms .
+  Database connection parameters have to be set with environment variables
+  (see above). Alternatively it can be run with the -f flag to save the meta-data 
+  to a StationXML file instead. Log messages are written to 
+  fdsnws-station2aqms.log . 
   
   positional arguments:
 
