@@ -18,9 +18,10 @@ Another option is to use a third-party distributor such as Anaconda ("conda").
 
 The above procedure should have installed a very rudimentary script (`inventory2aqms`) that 
 reads an "inventory.xml" file in the current working directory and tries to load it into 
-the database defined by the environment variables listed in env.sh. Just like fdsnws-station2aqms, 
-it will create the schema if it doesn't exist yet but not overwrite any existing tables. 
-Feel free to try that, the included inventory.xml file contains meta-data for some UW, UO, or CC 
+the database defined by the environment variables described in file "environment". 
+Just like fdsnws-station2aqms, it will create the schema if it doesn't exist yet 
+but not overwrite any existing tables.  Feel free to try that, the included 
+inventory.xml file contains meta-data for some UW, UO, or CC 
 network stations.  The script leaves behind a verbose inventory2aqms.log file.
 
 # Usage
