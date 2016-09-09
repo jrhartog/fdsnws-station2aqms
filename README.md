@@ -1,5 +1,6 @@
 # fdsnws-station2aqms
 Retrieve meta-data from a FDSN Station Web Service and populate basic AQMS meta-data tables.
+Current version only works with a PostgreSQL AQMS database.
 
 # Installation
 I recommend working with virtual environments. See  http://docs.python-guide.org/en/latest/dev/virtualenvs/
@@ -34,11 +35,13 @@ network stations.  The script leaves behind a verbose inventory2aqms.log file.
                              network
   
   Retrieves FDSN StationXML from a fdsn webservice (default=IRIS) and populates
-  (PostgreSQL) AQMS tables station_data, channel_data, and simple_response.
-  Database connection parameters have to be set with environment variables
-  (see above). Alternatively it can be run with the -f flag to save the meta-data 
-  to a StationXML file instead. Log messages are written to 
-  fdsnws-station2aqms.log . 
+  (PostgreSQL) AQMS tables station_data, channel_data, simple_response, and
+  associated dictionary tables (d_abbreviation, d_unit, d_format). Database
+  connection parameters have to be set with environment variables DB_NAME,
+  DB_HOST, DB_PORT, DB_USER, and optionally, DB_PASSWORD. The tables will be
+  created if they do not exist yet. Alternatively it can be run with the -f flag
+  to save the meta-data to a StationXML file instead. Logs are written to
+  fdsnws-station2aqms.log. 
   
   positional arguments:
 
