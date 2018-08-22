@@ -64,9 +64,11 @@ if __name__ == "__main__":
     parser.add_argument("-v","--verbose",help=help_text,action="store_true")
     
     args = parser.parse_args()
+    print args
 
     client = Client(args.webservice)
-    logging.basicConfig(filename="fdsnws-station2aqms.log", level=logging.WARNING)
+    logfile = "fdsnws-station2aqms_{}.log".format(datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'))
+    logging.basicConfig(filename=logfile, level=logging.WARNING)
 
     kwargs = {}
     kwargs["network"] = args.network
@@ -97,14 +99,14 @@ if __name__ == "__main__":
         print("No data available at {}: {}".format(args.webservice,e))
         sys.exit()
 
+    logging.info("Retrieved inventory: \n {}".format(inventory)) 
+
 
     # write to file if so requested by user
     if args.filename:
         POPULATE = False
         logging.info("Writing inventory to file {}".format(args.filename))
         inventory.write(args.filename, format="STATIONXML")
-
-    logging.info("".format(inventory))
 
     if POPULATE:
         try:
@@ -114,13 +116,16 @@ if __name__ == "__main__":
             from sqlalchemy.orm import sessionmaker
 
             from aqms_ir.configure import configure
-            from aqms_ir.inv2schema import inventory2db
+            from aqms_ir.inv2schema import inventory2db, print_metrics
             from aqms_ir.schema import Base
 
 
             # create configured engine instance, configure() uses environment
             # variables to create postgresql connect URI
+            logging.info("Configuring database connection parameters...")
             config = configure()
+            logging.info("Configured database connection parameters: {}".format(config))
+
             engine = engine_from_config(config, prefix='sqlalchemy.')
 
             # create a configured "Session" class
@@ -138,10 +143,12 @@ if __name__ == "__main__":
             inventory2db(session,inventory)
             session.close()
         
+            print_metrics()
             logging.info("Finished successfully.")
 
         except Exception as e:
-            logging.error("Error connecting to database {} as {} ({}). Will create .sql files.".format(db_name,db_user,e))
+            #logging.error("Error connecting to database {} as {} ({})".format(db_name,db_user,e))
+            logging.error("Error: {}".format(e))
             if not args.filename:
                 logging.error("Saving inventory to inventory.xml file instead.")
                 inventory.write("inventory.xml", format="STATIONXML")
